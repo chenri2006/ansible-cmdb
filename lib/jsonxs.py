@@ -76,13 +76,13 @@ For example:
 """
 
 
-ACTION_GET = 'get'
-ACTION_SET = 'set'
-ACTION_DEL = 'del'
-ACTION_APPEND = 'append'
-ACTION_INSERT = 'insert'
-ACTION_MKDICT = 'mkdict'
-ACTION_MKLIST = 'mklist'
+ACTION_GET = "get"
+ACTION_SET = "set"
+ACTION_DEL = "del"
+ACTION_APPEND = "append"
+ACTION_INSERT = "insert"
+ACTION_MKDICT = "mkdict"
+ACTION_MKLIST = "mklist"
 
 
 def tokenize(expr):
@@ -92,32 +92,32 @@ def tokenize(expr):
     """
     tokens = []
     escape = False
-    cur_token = ''
+    cur_token = ""
 
     for c in expr:
         if escape == True:
             cur_token += c
             escape = False
         else:
-            if c == '\\':
+            if c == "\\":
                 # Next char will be escaped
                 escape = True
                 continue
-            elif c == '[':
+            elif c == "[":
                 # Next token is of type index (list)
                 if len(cur_token) > 0:
                     tokens.append(cur_token)
-                    cur_token = ''
-            elif c == ']':
+                    cur_token = ""
+            elif c == "]":
                 # End of index token. Next token defaults to a key (dict)
                 if len(cur_token) > 0:
                     tokens.append(int(cur_token))
-                    cur_token = ''
-            elif c == '.':
+                    cur_token = ""
+            elif c == ".":
                 # End of key token. Next token defaults to a key (dict)
                 if len(cur_token) > 0:
                     tokens.append(cur_token)
-                    cur_token = ''
+                    cur_token = ""
             else:
                 # Append char to token name
                 cur_token += c
@@ -144,10 +144,14 @@ def jsonxs(data, expr, action=ACTION_GET, value=None, default=None):
         cur_path = data
         for token in tokens:
             prev_path = cur_path
-            if not token in cur_path and action in [ACTION_SET, ACTION_MKDICT, ACTION_MKLIST]:
+            if not token in cur_path and action in [
+                ACTION_SET,
+                ACTION_MKDICT,
+                ACTION_MKLIST,
+            ]:
                 # When setting values or creating dicts/lists, the key can be
                 # missing from the data struture
-               continue
+                continue
             cur_path = cur_path[token]
     except Exception:
         if default is not None:
@@ -176,4 +180,5 @@ def jsonxs(data, expr, action=ACTION_GET, value=None, default=None):
 
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()

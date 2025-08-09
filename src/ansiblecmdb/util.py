@@ -44,7 +44,9 @@ def deepupdate(target, src, overwrite=True):
                 elif type(target[k]) == set:
                     target[k].update(v)
                 else:
-                    raise TypeError("Cannot update {} with {}".format(type(target[k]), type(v)))
+                    raise TypeError(
+                        "Cannot update {} with {}".format(type(target[k]), type(v))
+                    )
         else:
             if k not in target or overwrite is True:
                 target[k] = copy.copy(v)
@@ -77,9 +79,9 @@ def to_bool(s):
     """
     if isinstance(s, bool):
         return s
-    elif s.lower() in ['true', '1']:
+    elif s.lower() in ["true", "1"]:
         return True
-    elif s.lower() in ['false', '0']:
+    elif s.lower() in ["false", "0"]:
         return False
     else:
         raise ValueError("Can't cast '%s' to bool" % (s))

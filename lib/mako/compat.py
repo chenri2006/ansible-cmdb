@@ -5,16 +5,17 @@ py3k = sys.version_info >= (3, 0)
 py33 = sys.version_info >= (3, 3)
 py2k = sys.version_info < (3,)
 py26 = sys.version_info >= (2, 6)
-jython = sys.platform.startswith('java')
-win32 = sys.platform.startswith('win')
-pypy = hasattr(sys, 'pypy_version_info')
+jython = sys.platform.startswith("java")
+win32 = sys.platform.startswith("win")
+pypy = hasattr(sys, "pypy_version_info")
 
 if py3k:
     from io import StringIO
     import builtins as compat_builtins
     from urllib.parse import quote_plus, unquote_plus
     from html.entities import codepoint2name, name2codepoint
-    string_types = str,
+
+    string_types = (str,)
     binary_type = bytes
     text_type = str
 
@@ -31,6 +32,7 @@ if py3k:
 
 else:
     import __builtin__ as compat_builtins
+
     try:
         from cStringIO import StringIO
     except:
@@ -40,7 +42,8 @@ else:
 
     from urllib import quote_plus, unquote_plus
     from htmlentitydefs import codepoint2name, name2codepoint
-    string_types = basestring,
+
+    string_types = (basestring,)
     binary_type = str
     text_type = unicode
 
@@ -56,12 +59,15 @@ else:
 
 if py33:
     from importlib import machinery
+
     def load_module(module_id, path):
         return machinery.SourceFileLoader(module_id, path).load_module()
+
 else:
     import imp
+
     def load_module(module_id, path):
-        fp = open(path, 'rb')
+        fp = open(path, "rb")
         try:
             return imp.load_source(module_id, path, fp)
         finally:
@@ -69,28 +75,32 @@ else:
 
 
 if py3k:
+
     def reraise(tp, value, tb=None, cause=None):
         if cause is not None:
             value.__cause__ = cause
         if value.__traceback__ is not tb:
             raise value.with_traceback(tb)
         raise value
+
 else:
-    exec("def reraise(tp, value, tb=None, cause=None):\n"
-            "    raise tp, value, tb\n")
+    exec("def reraise(tp, value, tb=None, cause=None):\n" "    raise tp, value, tb\n")
 
 
 def exception_as():
     return sys.exc_info()[1]
 
+
 try:
     import threading
+
     if py3k:
         import _thread as thread
     else:
         import thread
 except ImportError:
     import dummy_threading as threading
+
     if py3k:
         import _dummy_thread as thread
     else:
@@ -104,22 +114,27 @@ else:
 try:
     from functools import partial
 except:
+
     def partial(func, *args, **keywords):
         def newfunc(*fargs, **fkeywords):
             newkeywords = keywords.copy()
             newkeywords.update(fkeywords)
             return func(*(args + fargs), **newkeywords)
+
         return newfunc
 
 
 all = all
 import json
 
+
 def exception_name(exc):
     return exc.__class__.__name__
 
+
 try:
     from inspect import CO_VARKEYWORDS, CO_VARARGS
+
     def inspect_func_args(fn):
         if py3k:
             co = fn.__code__
@@ -142,14 +157,19 @@ try:
             return args, varargs, varkw, fn.__defaults__
         else:
             return args, varargs, varkw, fn.func_defaults
+
 except ImportError:
     import inspect
+
     def inspect_func_args(fn):
         return inspect.getargspec(fn)
 
+
 if py3k:
+
     def callable(fn):
-        return hasattr(fn, '__call__')
+        return hasattr(fn, "__call__")
+
 else:
     callable = callable
 
@@ -160,6 +180,8 @@ else:
 def with_metaclass(meta, base=object):
     """Create a base class with a metaclass."""
     return meta("%sBase" % meta.__name__, (base,), {})
+
+
 ################################################
 
 
@@ -168,7 +190,7 @@ def arg_stringname(func_arg):
     In Python3.4 a function's args are
     of _ast.arg type not _ast.name
     """
-    if hasattr(func_arg, 'arg'):
+    if hasattr(func_arg, "arg"):
         return func_arg.arg
     else:
         return str(func_arg)

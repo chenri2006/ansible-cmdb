@@ -7,6 +7,7 @@ try:
 except ImportError:
     import yaml3 as yaml
 
+
 class StupidYAMLShit(yaml.SafeLoader):
     """
     FUCK PYYAML. This class overrides some insanely deep shit which took at
@@ -24,11 +25,12 @@ class StupidYAMLShit(yaml.SafeLoader):
     pile of gunk written by a PHP programmer?!
 
     """
+
     def handle_tag(self, node_name, node):
         # I just *know* there are gonna be problems with simply returning a
         # Scalar, but I don't give a fuck at this point.
         if node_name == "vault":
-            new_node = yaml.ScalarNode(node_name, 'ENCRYPTED CONTENTS REDACTED')
+            new_node = yaml.ScalarNode(node_name, "ENCRYPTED CONTENTS REDACTED")
         else:
             new_node = yaml.ScalarNode(node_name, node.value)
 
@@ -36,9 +38,7 @@ class StupidYAMLShit(yaml.SafeLoader):
 
 
 # Fugly!
-StupidYAMLShit.add_multi_constructor(
-    u'!',
-    StupidYAMLShit.handle_tag)
+StupidYAMLShit.add_multi_constructor("!", StupidYAMLShit.handle_tag)
 
 
 def safe_load(contents):

@@ -3,6 +3,7 @@ import re
 import json
 import traceback
 import logging
+
 if sys.version_info[0] == 2:
     # Python 2.x shlex doesn't support unicode
     import ushlex as shlex
@@ -18,6 +19,7 @@ class HostsParser(object):
     it belongs to (including parent groups) and all the variables defined for
     it (including variables from parent groups and 'vars' groups).
     """
+
     def __init__(self, hosts_contents):
         self.hosts_contents = hosts_contents
         self.hosts = {}
@@ -29,23 +31,24 @@ class HostsParser(object):
 
             # Initialize each unique host found in the hosts file
             for hostname in self._get_distinct_hostnames():
-                self.hosts[hostname] = {
-                    'groups': set(),
-                    'hostvars': {}
-                }
+                self.hosts[hostname] = {"groups": set(), "hostvars": {}}
 
             # Go through the different types of sections and apply each section to
             # the hosts it covers. 'Applying a section' means adding the group name
             # and variables defined in the section to each host the section covers.
-            for section in filter(lambda s: s['type'] == 'children', self.sections):
+            for section in filter(lambda s: s["type"] == "children", self.sections):
                 self._apply_section(section, self.hosts)
-            for section in filter(lambda s: s['type'] == 'vars', self.sections):
+            for section in filter(lambda s: s["type"] == "vars", self.sections):
                 self._apply_section(section, self.hosts)
-            for section in filter(lambda s: s['type'] == 'hosts', self.sections):
+            for section in filter(lambda s: s["type"] == "hosts", self.sections):
                 self._apply_section(section, self.hosts)
         except ValueError:
             tb = traceback.format_exc()
-            self.log.warn("Error while parsing hosts contents: '{0}'. Invalid hosts file?".format(tb))
+            self.log.warn(
+                "Error while parsing hosts contents: '{0}'. Invalid hosts file?".format(
+                    tb
+                )
+            )
 
     def _parse_hosts_contents(self, hosts_contents):
         """
@@ -71,31 +74,20 @@ class HostsParser(object):
             }
         """
         sections = []
-        cur_section = {
-            'type': 'hosts',
-            'name': None,
-            'entries': []
-        }
+        cur_section = {"type": "hosts", "name": None, "entries": []}
 
         for line in hosts_contents:
             line = line.strip()
-            if line.startswith('#') or not line:
+            if line.startswith("#") or not line:
                 continue
-            elif line.startswith('['):
+            elif line.startswith("["):
                 sections.append(cur_section)
                 section_type, name = self._parse_line_section(line)
-                cur_section = {
-                    'type': section_type,
-                    'name': name,
-                    'entries': []
-                }
+                cur_section = {"type": section_type, "name": name, "entries": []}
             else:
-                name, vars = self._parse_line_entry(line, cur_section['type'])
-                entry = {
-                    'name': name,
-                    'hostvars': vars
-                }
-                cur_section['entries'].append(entry)
+                name, vars = self._parse_line_entry(line, cur_section["type"])
+                entry = {"name": name, "hostvars": vars}
+                cur_section["entries"].append(entry)
         sections.append(cur_section)
         return sections
 
@@ -117,11 +109,11 @@ class HostsParser(object):
         """
         m = re.match("\[(.*)\]", line)
         group_def = m.groups()[0]
-        if ':' in group_def:
-            group_name, group_type = group_def.split(':')
+        if ":" in group_def:
+            group_name, group_type = group_def.split(":")
         else:
             group_name = group_def
-            group_type = 'hosts'
+            group_type = "hosts"
 
         return (group_type, group_name)
 
@@ -153,7 +145,7 @@ class HostsParser(object):
         name = None
         key_values = {}
 
-        if type == 'vars':
+        if type == "vars":
             key_values = self._parse_line_vars(line)
         else:
             tokens = shlex.split(line.strip())
@@ -161,7 +153,9 @@ class HostsParser(object):
             try:
                 key_values = self._parse_vars(tokens)
             except ValueError:
-                self.log.warning("Unsupported vars syntax. Skipping line: {0}".format(line))
+                self.log.warning(
+                    "Unsupported vars syntax. Skipping line: {0}".format(line)
+                )
                 return (name, {})
         return (name, key_values)
 
@@ -176,8 +170,8 @@ class HostsParser(object):
         #   json_like_vars=[{'name': 'htpasswd_auth'}]
         # We'll try this first. If it fails, we'll fall back to normal var
         # lines. Since it's undocumented, we just assume some things.
-        k, v = line.strip().split('=', 1)
-        if v.startswith('['):
+        k, v = line.strip().split("=", 1)
+        if v.startswith("["):
             try:
                 list_res = ihateyaml.safe_load(v)
                 if isinstance(list_res[0], dict):
@@ -203,12 +197,12 @@ class HostsParser(object):
         """
         key_values = {}
         for token in tokens:
-            if token.startswith('#'):
+            if token.startswith("#"):
                 # End parsing if we encounter a comment, which lasts
                 # until the end of the line.
                 break
             else:
-                k, v = token.split('=', 1)
+                k, v = token.split("=", 1)
                 key = k.strip()
                 key_values[key] = v.strip()
         return key_values
@@ -219,7 +213,7 @@ class HostsParser(object):
         """
         hostnames = []
         for section in self.sections:
-            hostnames.extend(self._group_get_hostnames(section['name']))
+            hostnames.extend(self._group_get_hostnames(section["name"]))
         return set(hostnames)
 
     def _apply_section(self, section, hosts):
@@ -228,9 +222,9 @@ class HostsParser(object):
         add the section's group name and variables to every host.
         """
         # Add the current group name to each host that this section covers.
-        if section['name'] is not None:
-            for hostname in self._group_get_hostnames(section['name']):
-                hosts[hostname]['groups'].add(section['name'])
+        if section["name"] is not None:
+            for hostname in self._group_get_hostnames(section["name"]):
+                hosts[hostname]["groups"].add(section["name"])
 
         # Apply variables
         func_map = {
@@ -238,7 +232,7 @@ class HostsParser(object):
             "children": self._apply_section_children,
             "vars": self._apply_section_vars,
         }
-        func = func_map[section['type']]
+        func = func_map[section["type"]]
         func(section, hosts)
 
     def _apply_section_hosts(self, section, hosts):
@@ -246,38 +240,38 @@ class HostsParser(object):
         Add the variables for each entry in a 'hosts' section to the hosts
         belonging to that entry.
         """
-        for entry in section['entries']:
-            for hostname in self.expand_hostdef(entry['name']):
+        for entry in section["entries"]:
+            for hostname in self.expand_hostdef(entry["name"]):
                 if hostname not in hosts:
                     # Expanded host or child host or something else refers to a
                     # host that isn't actually defined. Ansible skips this, so
                     # we will too.
                     continue
                 host = hosts[hostname]
-                for var_key, var_val in entry['hostvars'].items():
-                    host['hostvars'][var_key] = var_val
+                for var_key, var_val in entry["hostvars"].items():
+                    host["hostvars"][var_key] = var_val
 
     def _apply_section_children(self, section, hosts):
         """
         Add the variables for each entry in a 'children' section to the hosts
         belonging to that entry.
         """
-        for entry in section['entries']:
-            for hostname in self._group_get_hostnames(entry['name']):
+        for entry in section["entries"]:
+            for hostname in self._group_get_hostnames(entry["name"]):
                 host = hosts[hostname]
-                for var_key, var_val in entry['hostvars'].items():
-                    host['hostvars'][var_key] = var_val
+                for var_key, var_val in entry["hostvars"].items():
+                    host["hostvars"][var_key] = var_val
 
     def _apply_section_vars(self, section, hosts):
         """
         Apply the variables in a 'vars' section to each host belonging to the
         group the section refers to.
         """
-        for hostname in self._group_get_hostnames(section['name']):
+        for hostname in self._group_get_hostnames(section["name"]):
             host = hosts[hostname]
-            for entry in section['entries']:
-                for var_key, var_val in entry['hostvars'].items():
-                    host['hostvars'][var_key] = var_val
+            for entry in section["entries"]:
+                for var_key, var_val in entry["hostvars"].items():
+                    host["hostvars"][var_key] = var_val
 
     def _group_get_hostnames(self, group_name):
         """
@@ -286,15 +280,15 @@ class HostsParser(object):
         """
         hostnames = []
 
-        hosts_section = self._get_section(group_name, 'hosts')
+        hosts_section = self._get_section(group_name, "hosts")
         if hosts_section:
-            for entry in hosts_section['entries']:
-                hostnames.extend(self.expand_hostdef(entry['name']))
+            for entry in hosts_section["entries"]:
+                hostnames.extend(self.expand_hostdef(entry["name"]))
 
-        children_section = self._get_section(group_name, 'children')
+        children_section = self._get_section(group_name, "children")
         if children_section:
-            for entry in children_section['entries']:
-                hostnames.extend(self._group_get_hostnames(entry['name']))
+            for entry in children_section["entries"]:
+                hostnames.extend(self._group_get_hostnames(entry["name"]))
 
         return hostnames
 
@@ -303,7 +297,7 @@ class HostsParser(object):
         Find and return a section with `name` and `type`
         """
         for section in self.sections:
-            if section['name'] == name and section['type'] == type:
+            if section["name"] == name and section["type"] == type:
                 return section
         return None
 
@@ -325,17 +319,17 @@ class HostsParser(object):
             # partially expanded host(s) gets added back to the todo list.
             while hosts_todo:
                 host = hosts_todo.pop(0)
-                if '[' not in host:
+                if "[" not in host:
                     hosts_done.append(host)
                     continue
 
                 # Extract the head, first pattern and tail. E.g. foo[0:3].bar.com ->
                 # head="foo", pattern="0:3", tail=".bar.com"
-                head, rest = host.split('[', 1)
-                pattern, tail = rest.split(']', 1)
-                start, end = pattern.split(':')
+                head, rest = host.split("[", 1)
+                pattern, tail = rest.split("]", 1)
+                start, end = pattern.split(":")
                 fill = False
-                if start.startswith('0') and len(start) > 0:
+                if start.startswith("0") and len(start) > 0:
                     fill = len(start)
 
                 try:
@@ -344,23 +338,25 @@ class HostsParser(object):
                             range_nr = str(i).zfill(fill)
                         else:
                             range_nr = i
-                        new_host = '{0}{1}{2}'.format(head, range_nr, tail)
-                        if '[' in new_host:
+                        new_host = "{0}{1}{2}".format(head, range_nr, tail)
+                        if "[" in new_host:
                             hosts_todo.append(new_host)
                         else:
                             hosts_done.append(new_host)
                 except ValueError:
                     for i in range(ord(start), ord(end) + 1):
-                        new_host = '{0}{1}{2}'.format(head, chr(i), tail)
-                        if '[' in new_host:
+                        new_host = "{0}{1}{2}".format(head, chr(i), tail)
+                        if "[" in new_host:
                             hosts_todo.append(new_host)
                         else:
                             hosts_done.append(new_host)
 
             # Strip port numbers off and return
-            return [host_name.split(':')[0] for host_name in hosts_done]
+            return [host_name.split(":")[0] for host_name in hosts_done]
         except Exception as e:
-            self.log.warning("Couldn't parse host definition '{0}': {1}".format(hostdef, e))
+            self.log.warning(
+                "Couldn't parse host definition '{0}': {1}".format(hostdef, e)
+            )
             return []
 
 
@@ -368,6 +364,7 @@ class DynInvParser(object):
     """
     Parse output of a dyanmic inventory script.
     """
+
     def __init__(self, dynvinv_contents):
         self.dynvinv_contents = dynvinv_contents
         self.hosts = {}
@@ -375,10 +372,10 @@ class DynInvParser(object):
         self.log = logging.getLogger(__name__)
 
         for k, v in self.dynvinv_json.items():
-            if k.startswith('_meta'):
+            if k.startswith("_meta"):
                 # Meta member contains hostvars
                 self._parse_meta(v)
-            elif k.startswith('_'):
+            elif k.startswith("_"):
                 # Some unknown private member we don't support
                 pass
             elif k == "all":
@@ -393,10 +390,7 @@ class DynInvParser(object):
         Get an existing host or otherwise initialize a new empty one.
         """
         if hostname not in self.hosts:
-            self.hosts[hostname] = {
-                'groups': set(),
-                'hostvars': {}
-            }
+            self.hosts[hostname] = {"groups": set(), "hostvars": {}}
         return self.hosts[hostname]
 
     def _parse_group(self, group_name, group):
@@ -421,24 +415,28 @@ class DynInvParser(object):
             hostnames_in_group = set()
 
             # Group member with hosts and variable definitions.
-            for hostname in group.get('hosts', []):
-                self._get_host(hostname)['groups'].add(group_name)
+            for hostname in group.get("hosts", []):
+                self._get_host(hostname)["groups"].add(group_name)
                 hostnames_in_group.add(hostname)
             # Apply variables to all hosts in group
-            for var_key, var_val in group.get('vars', {}).items():
+            for var_key, var_val in group.get("vars", {}).items():
                 for hostname in hostnames_in_group:
-                    self._get_host(hostname)['hostvars'][var_key] = var_val
+                    self._get_host(hostname)["hostvars"][var_key] = var_val
         elif type(group) == list:
             # List of hostnames for this group
             for hostname in group:
-                self._get_host(hostname)['groups'].add(group_name)
+                self._get_host(hostname)["groups"].add(group_name)
         else:
-            self.log.warning("Invalid element found in dynamic inventory output: {0}".format(type(group)))
+            self.log.warning(
+                "Invalid element found in dynamic inventory output: {0}".format(
+                    type(group)
+                )
+            )
 
     def _parse_meta(self, meta):
         """
         Parse the _meta element from a dynamic host inventory output.
         """
-        for hostname, hostvars in meta.get('hostvars', {}).items():
+        for hostname, hostvars in meta.get("hostvars", {}).items():
             for var_key, var_val in hostvars.items():
-                self._get_host(hostname)['hostvars'][var_key] = var_val
+                self._get_host(hostname)["hostvars"][var_key] = var_val

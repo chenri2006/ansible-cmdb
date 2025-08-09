@@ -89,9 +89,8 @@ class Cache(object):
             return creation_function()
 
         return self.impl.get_or_create(
-            key,
-            creation_function,
-            **self._get_cache_kw(kw, context))
+            key, creation_function, **self._get_cache_kw(kw, context)
+        )
 
     def set(self, key, value, **kw):
         """Place a value in the cache.
@@ -140,7 +139,7 @@ class Cache(object):
         template.
 
         """
-        self.invalidate('render_body', __M_defname='render_body')
+        self.invalidate("render_body", __M_defname="render_body")
 
     def invalidate_def(self, name):
         """Invalidate the cached content of a particular ``<%def>`` within this
@@ -148,7 +147,7 @@ class Cache(object):
 
         """
 
-        self.invalidate('render_%s' % name, __M_defname='render_%s' % name)
+        self.invalidate("render_%s" % name, __M_defname="render_%s" % name)
 
     def invalidate_closure(self, name):
         """Invalidate a nested ``<%def>`` within this template.
@@ -164,7 +163,7 @@ class Cache(object):
         self.invalidate(name, __M_defname=name)
 
     def _get_cache_kw(self, kw, context):
-        defname = kw.pop('__M_defname', None)
+        defname = kw.pop("__M_defname", None)
         if not defname:
             tmpl_kw = self.template.cache_args.copy()
             tmpl_kw.update(kw)
@@ -176,7 +175,7 @@ class Cache(object):
             self._def_regions[defname] = tmpl_kw
         if context and self.impl.pass_context:
             tmpl_kw = tmpl_kw.copy()
-            tmpl_kw.setdefault('context', context)
+            tmpl_kw.setdefault("context", context)
         return tmpl_kw
 
 

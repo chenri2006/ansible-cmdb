@@ -10,11 +10,14 @@ import traceback
 import sys
 from mako import util, compat
 
+
 class MakoException(Exception):
     pass
 
+
 class RuntimeException(MakoException):
     pass
+
 
 def _format_filepos(lineno, pos, filename):
     if filename is None:
@@ -25,33 +28,37 @@ def _format_filepos(lineno, pos, filename):
 
 class CompileException(MakoException):
     def __init__(self, message, source, lineno, pos, filename):
-        MakoException.__init__(self,
-                              message + _format_filepos(lineno, pos, filename))
+        MakoException.__init__(self, message + _format_filepos(lineno, pos, filename))
         self.lineno = lineno
         self.pos = pos
         self.filename = filename
         self.source = source
 
+
 class SyntaxException(MakoException):
     def __init__(self, message, source, lineno, pos, filename):
-        MakoException.__init__(self,
-                              message + _format_filepos(lineno, pos, filename))
+        MakoException.__init__(self, message + _format_filepos(lineno, pos, filename))
         self.lineno = lineno
         self.pos = pos
         self.filename = filename
         self.source = source
+
 
 class UnsupportedError(MakoException):
     """raised when a retired feature is used."""
 
+
 class NameConflictError(MakoException):
     """raised when a reserved word is used inappropriately"""
+
 
 class TemplateLookupException(MakoException):
     pass
 
+
 class TopLevelLookupException(TemplateLookupException):
     pass
+
 
 class RichTraceback(object):
     """Pull the current exception from the ``sys`` traceback and extracts
@@ -60,6 +67,7 @@ class RichTraceback(object):
     See the usage examples in :ref:`handling_exceptions`.
 
     """
+
     def __init__(self, error=None, traceback=None):
         self.source, self.lineno = "", 0
 
@@ -98,7 +106,7 @@ class RichTraceback(object):
                 # str(Exception(u'\xe6')) work in Python < 2.6
                 self.message = self.error.args[0]
         if not isinstance(self.message, compat.text_type):
-            self.message = compat.text_type(self.message, 'ascii', 'replace')
+            self.message = compat.text_type(self.message, "ascii", "replace")
 
     def _get_reformatted_records(self, records):
         for rec in records:
@@ -122,8 +130,7 @@ class RichTraceback(object):
 
     @property
     def reverse_traceback(self):
-        """Return the same data as traceback, except in reverse order.
-        """
+        """Return the same data as traceback, except in reverse order."""
 
         return list(self._get_reformatted_records(self.reverse_records))
 
@@ -134,12 +141,13 @@ class RichTraceback(object):
         source, and code line from that line number of the template."""
 
         import mako.template
+
         mods = {}
         rawrecords = traceback.extract_tb(trcback)
         new_trcback = []
         for filename, lineno, function, line in rawrecords:
             if not line:
-                line = ''
+                line = ""
             try:
                 (line_map, template_lines) = mods[filename]
             except KeyError:
@@ -152,7 +160,7 @@ class RichTraceback(object):
                     # A normal .py file (not a Template)
                     if not compat.py3k:
                         try:
-                            fp = open(filename, 'rb')
+                            fp = open(filename, "rb")
                             encoding = util.parse_encoding(fp)
                             fp.close()
                         except IOError:
@@ -160,20 +168,20 @@ class RichTraceback(object):
                         if encoding:
                             line = line.decode(encoding)
                         else:
-                            line = line.decode('ascii', 'replace')
-                    new_trcback.append((filename, lineno, function, line,
-                                            None, None, None, None))
+                            line = line.decode("ascii", "replace")
+                    new_trcback.append(
+                        (filename, lineno, function, line, None, None, None, None)
+                    )
                     continue
 
                 template_ln = 1
 
-                source_map = mako.template.ModuleInfo.\
-                                get_module_source_metadata(
-                                    module_source, full_line_map=True)
-                line_map = source_map['full_line_map']
+                source_map = mako.template.ModuleInfo.get_module_source_metadata(
+                    module_source, full_line_map=True
+                )
+                line_map = source_map["full_line_map"]
 
-                template_lines = [line for line in
-                                    template_source.split("\n")]
+                template_lines = [line for line in template_source.split("\n")]
                 mods[filename] = (line_map, template_lines)
 
             template_ln = line_map[lineno - 1]
@@ -182,9 +190,18 @@ class RichTraceback(object):
                 template_line = template_lines[template_ln - 1]
             else:
                 template_line = None
-            new_trcback.append((filename, lineno, function,
-                                line, template_filename, template_ln,
-                                template_line, template_source))
+            new_trcback.append(
+                (
+                    filename,
+                    lineno,
+                    function,
+                    line,
+                    template_filename,
+                    template_ln,
+                    template_line,
+                    template_source,
+                )
+            )
         if not self.source:
             for l in range(len(new_trcback) - 1, 0, -1):
                 if new_trcback[l][5]:
@@ -195,7 +212,7 @@ class RichTraceback(object):
                 if new_trcback:
                     try:
                         # A normal .py file (not a Template)
-                        fp = open(new_trcback[-1][0], 'rb')
+                        fp = open(new_trcback[-1][0], "rb")
                         encoding = util.parse_encoding(fp)
                         fp.seek(0)
                         self.source = fp.read()
@@ -203,7 +220,7 @@ class RichTraceback(object):
                         if encoding:
                             self.source = self.source.decode(encoding)
                     except IOError:
-                        self.source = ''
+                        self.source = ""
                     self.lineno = new_trcback[-1][1]
         return new_trcback
 
@@ -216,7 +233,9 @@ def text_error_template(lookup=None):
 
     """
     import mako.template
-    return mako.template.Template(r"""
+
+    return mako.template.Template(
+        r"""
 <%page args="error=None, traceback=None"/>
 <%!
     from mako.exceptions import RichTraceback
@@ -230,27 +249,34 @@ Traceback (most recent call last):
     ${line | trim}
 % endfor
 ${tback.errorname}: ${tback.message}
-""")
+"""
+    )
 
 
 def _install_pygments():
     global syntax_highlight, pygments_html_formatter
-    from mako.ext.pygmentplugin import syntax_highlight,\
-            pygments_html_formatter
+    from mako.ext.pygmentplugin import syntax_highlight, pygments_html_formatter
+
 
 def _install_fallback():
     global syntax_highlight, pygments_html_formatter
     from mako.filters import html_escape
+
     pygments_html_formatter = None
-    def syntax_highlight(filename='', language=None):
+
+    def syntax_highlight(filename="", language=None):
         return html_escape
+
 
 def _install_highlighting():
     try:
         _install_pygments()
     except ImportError:
         _install_fallback()
+
+
 _install_highlighting()
+
 
 def html_error_template():
     """Provides a template that renders a stack trace in an HTML format,
@@ -266,7 +292,9 @@ def html_error_template():
 
     """
     import mako.template
-    return mako.template.Template(r"""
+
+    return mako.template.Template(
+        r"""
 <%!
     from mako.exceptions import RichTraceback, syntax_highlight,\
             pygments_html_formatter
@@ -369,5 +397,7 @@ def html_error_template():
 </body>
 </html>
 % endif
-""", output_encoding=sys.getdefaultencoding(),
-        encoding_errors='htmlentityreplace')
+""",
+        output_encoding=sys.getdefaultencoding(),
+        encoding_errors="htmlentityreplace",
+    )
