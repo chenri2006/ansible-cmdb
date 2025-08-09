@@ -16,7 +16,7 @@ cols = [
   {"title": "MemUsed",    "id": "memused",    "visible": True, "field": lambda h: '%0.0fg' % (int(host['ansible_facts'].get('ansible_memory_mb', {}).get('real', {}).get('used',0)) / 1000.0)},
   {"title": "CPUs",       "id": "cpus",       "visible": True, "field": lambda h: str(host['ansible_facts'].get('ansible_processor_count', 0))},
   {"title": "Virt",       "id": "virt",       "visible": True, "field": lambda h: host['ansible_facts'].get('ansible_virtualization_type', 'Unk') + '/' + host['ansible_facts'].get('ansible_virtualization_role', 'Unk')},
-  {"title": "Disk avail", "id": "disk_avail", "visible": True, "field": lambda h: ', '.join(['{0:0.1f}g'.format(i['size_available']/1048576000) for i in host['ansible_facts'].get('ansible_mounts', []) if 'size_available' in i and i['size_available'] > 1])},
+  {"title": "Disk avail", "id": "disk_avail", "visible": True, "field": lambda h: ', '.join(['{0:0.1f}g'.format(i['size_available'] / 1_000_000_000) for i in host['ansible_facts'].get('ansible_mounts', []) if i.get('size_available') is not None and i['size_available'] > 1_000_000_000])},
 ]
 
 # Enable columns specified with '--columns'
