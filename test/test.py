@@ -1,6 +1,7 @@
 import sys
 import unittest
-import imp
+import importlib.util
+import sys
 import os
 
 sys.path.insert(0, os.path.realpath("../lib"))

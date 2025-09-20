@@ -64,15 +64,12 @@ if py33:
         return machinery.SourceFileLoader(module_id, path).load_module()
 
 else:
-    import imp
-
+    import importlib.util
     def load_module(module_id, path):
-        fp = open(path, "rb")
-        try:
-            return imp.load_source(module_id, path, fp)
-        finally:
-            fp.close()
-
+        spec = importlib.util.spec_from_file_location(module_id, path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
 
 if py3k:
 

@@ -107,7 +107,7 @@ class HostsParser(object):
         Returns:
             ('children', 'prod')
         """
-        m = re.match("\[(.*)\]", line)
+        m = re.match(r"\[(.*)\]", line)
         group_def = m.groups()[0]
         if ":" in group_def:
             group_name, group_type = group_def.split(":")

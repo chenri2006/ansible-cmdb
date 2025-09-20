@@ -23,7 +23,6 @@ def get_data_files(path, strip="", prefix=""):
         data_files.append([prefix + dirpath[len(strip) :], files])
     return data_files
 
-
 if sys.argv[-1] == "publish":
     os.system("python setup.py sdist upload")
     print("You should also add a git tag for this version:")
@@ -33,7 +32,7 @@ if sys.argv[-1] == "publish":
 
 setup(
     name="ansible-cmdb",
-    version=get_version(),
+    version="1.0.1",
     license="GPLv3",
     description="Generate host overview from ansible fact gathering output",
     long_description=get_long_description(),
