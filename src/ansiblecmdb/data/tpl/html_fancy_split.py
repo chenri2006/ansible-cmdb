@@ -23,7 +23,7 @@ def render(hosts, vars={}, tpl_dirs=[]):
     template = lookup.get_template("html_fancy_split_overview.tpl")
     out_file = os.path.join("cmdb", "index.html")
     output = template.render(hosts=hosts, **vars).lstrip().decode("utf8")
-    with codecs.open(out_file, "w", encoding="utf8") as f:
+    with open(out_file, "w", encoding="utf8") as f:
         f.write(output)
 
     # Render host details
@@ -31,5 +31,5 @@ def render(hosts, vars={}, tpl_dirs=[]):
     for hostname, host in hosts.items():
         out_file = os.path.join("cmdb", "{0}.html".format(hostname))
         output = template.render(host=host, **vars).lstrip().decode("utf8")
-        with codecs.open(out_file, "w", encoding="utf8") as f:
+        with open(out_file, "w", encoding="utf8") as f:
             f.write(output)

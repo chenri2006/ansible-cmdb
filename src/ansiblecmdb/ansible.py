@@ -168,7 +168,7 @@ class Ansible(object):
                 path = os.path.join(inventory_path, fname)
                 if os.path.isdir(path):
                     continue
-                with codecs.open(path, "r", encoding="utf8") as f:
+                with open(path, "r", encoding="utf8") as f:
                     hosts_contents += f.readlines()
         else:
             self.log.debug(
@@ -176,7 +176,7 @@ class Ansible(object):
                     inventory_path
                 )
             )
-            with codecs.open(inventory_path, "r", encoding="utf8") as f:
+            with open(inventory_path, "r", encoding="utf8") as f:
                 hosts_contents = f.readlines()
 
         # Parse inventory and apply it to the hosts
@@ -233,7 +233,7 @@ class Ansible(object):
 
         try:
             self.log.debug("Reading host vars from {}".format(path))
-            f = codecs.open(path, "r", encoding="utf8")
+            f = open(path, "r", encoding="utf8")
             invars = ihateyaml.safe_load(f)
             f.close()
         except Exception as err:
@@ -281,7 +281,7 @@ class Ansible(object):
 
                 try:
                     self.log.debug("Reading group vars from {}".format(full_path))
-                    f = codecs.open(full_path, "r", encoding="utf8")
+                    f = open(full_path, "r", encoding="utf8")
                     invars = ihateyaml.safe_load(f)
                     f.close()
                 except Exception as err:
@@ -328,7 +328,7 @@ class Ansible(object):
             )
             hostname = fname
 
-            fd = codecs.open(os.path.join(fact_dir, fname), "r", encoding="utf8")
+            fd = open(os.path.join(fact_dir, fname), "r", encoding="utf8")
             s = fd.readlines()
             fd.close()
             try:

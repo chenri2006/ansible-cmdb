@@ -23,7 +23,7 @@ def render(hosts, vars={}, tpl_dirs=[]):
     template = lookup.get_template("markdown_split_overview.tpl")
     out_file = os.path.join("cmdb", "overview.md")
     output = template.render(hosts=hosts, **vars).lstrip().decode("utf8")
-    with codecs.open(out_file, "w", encoding="utf8") as f:
+    with open(out_file, "w", encoding="utf8") as f:
         f.write(output)
 
     # Render host details
@@ -35,5 +35,5 @@ def render(hosts, vars={}, tpl_dirs=[]):
             .lstrip()
             .decode("utf8")
         )
-        with codecs.open(out_file, "w", encoding="utf8") as f:
+        with open(out_file, "w", encoding="utf8") as f:
             f.write(output)
