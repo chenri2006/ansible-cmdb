@@ -17,9 +17,9 @@ It supports multiple types of output (html, csv, sql, etc) and extending
 information gathered by Ansible with custom data. For each host it also shows
 the groups, host variables, custom variables and machine-local facts.
 
-![](https://raw.githubusercontent.com/fboender/ansible-cmdb/master/contrib/screenshot-overview.png)
+![](https://raw.githubusercontent.com/chenri2006/ansible-cmdb/master/contrib/screenshot-overview.png)
 
-![](https://raw.githubusercontent.com/fboender/ansible-cmdb/master/contrib/screenshot-detail.png)
+![](https://raw.githubusercontent.com/chenri2006/ansible-cmdb/master/contrib/screenshot-detail.png)
 
 [HTML example](https://rawgit.com/fboender/ansible-cmdb/master/example/html_fancy.html) output.
 
