@@ -45,6 +45,10 @@ Features
 * Export displayed/filtered data as CSV, Excel (.xlsx), or PDF directly from
   the browser. A Print button is also available. Exports respect column
   visibility and active search filters.
+* Advanced search with support for logical operators (`AND`, `OR`, `NOT`),
+  parenthetical grouping, `"quoted phrases"`, and `/regex/` patterns. Works
+  alongside the default search box. See [Advanced Search](#advanced-search)
+  below for details.
 * Host overview and detailed host information.
 * Host and group variables.
 * Gathered host facts and manual custom facts.
@@ -86,6 +90,36 @@ All documentation can be viewed at [readthedocs.io](http://ansible-cmdb.readthed
 * [Requirements and installation](http://ansible-cmdb.readthedocs.io/en/latest/installation/)
 * [Usage](http://ansible-cmdb.readthedocs.io/en/latest/usage/)
 * [Contributing and development](http://ansible-cmdb.readthedocs.io/en/latest/dev/)
+
+
+Advanced Search
+---------------
+
+The HTML templates include an **Advanced search** box below the default search
+box. Both work together — the default search filters first, then the advanced
+filter applies on top.
+
+### Syntax
+
+| Syntax | Example | Description |
+|--------|---------|-------------|
+| Plain terms | `centos prod` | Implicit AND — all terms must match (same as default search) |
+| AND | `centos AND prod` | Explicit AND |
+| OR | `centos OR ubuntu` | Either term matches |
+| NOT | `NOT windows` | Exclude matching rows |
+| Grouping | `(centos OR ubuntu) AND prod` | Parenthetical precedence |
+| Quoted phrase | `"Red Hat"` | Exact phrase match |
+| Regex | `/^192\.168\./` | Regular expression (case-insensitive) |
+| Regex (alt) | `regex:^192\.168\.` | Alternate regex syntax |
+
+Operators `AND`, `OR`, and `NOT` are case-insensitive.
+
+### URL sharing
+
+Advanced search terms are shareable via the `?adv=` query parameter, similar to
+the default search's `?search=` parameter. Both can be combined:
+
+    http://host:3000/?search=prod&adv=(centos OR ubuntu) AND NOT dev
 
 
 License

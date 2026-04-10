@@ -219,6 +219,14 @@
       #hosts table.net_overview { margin: 16px 0px 16px 0px; }
       #hosts .error { color: #FF0000; }
 
+      /* Advanced search box */
+      #adv_search_wrapper { float: right; clear: right; padding-bottom: 8px; color: #808080; }
+      #adv_search_wrapper label { font-size: 13px; }
+      #adv_search_wrapper input { margin-left: 12px; width: 320px; padding: 3px 6px; }
+      #adv_search_wrapper .adv_help { font-size: 11px; color: #aaa; margin-top: 4px; }
+      #adv_search_wrapper .adv_help code { background: #f0f0f0; padding: 1px 4px; border-radius: 2px; }
+      #adv_search_link a { color: #000000; background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAoUlEQVR4Xu2TIQ6EMBBF/+4dOUBFBYoboBHoBsuRUCgcnpDg3/Y7ICQVK3ebvPxJ30xH9QXom/PO/PoDAjSOY8pwIwFFr2EYUobjONj33bjGd3Ylr77v2bYNp7Hwhifs3HOeUdu2LMuCE1DXdedtl612cJ1R0zRM04TT1HVNjPERO/ecZxRCSBnmeWZdV+Ma39mVvABVVZUy3EhA0f//gvQB4y08WIiD/goAAAAASUVORK5CYII=) no-repeat left center; padding: 5px 0 5px 25px; }
+
       /* Export buttons styling */
       div.dt-buttons { margin-bottom: 12px; }
       .dt-button {
@@ -479,6 +487,143 @@
     hostElem.removeClass('collapsed');
     hostElem.next().removeClass('collapsed');
   });
+
+  // ---------------------------------------------------------------
+  // Advanced Search: supports AND, OR, NOT, parentheses, "quoted
+  // phrases", and /regex/ or regex:pattern syntax.
+  // Space-separated terms are implicit AND (matches default search).
+  // ---------------------------------------------------------------
+
+  // Tokenizer
+  function advTokenize(input) {
+    var tokens = [], i = 0;
+    while (i < input.length) {
+      if (/\s/.test(input[i])) { i++; continue; }
+      if (input[i] === '(') { tokens.push({type:'LPAREN'}); i++; continue; }
+      if (input[i] === ')') { tokens.push({type:'RPAREN'}); i++; continue; }
+      if (input[i] === '"') {
+        var j = input.indexOf('"', i + 1);
+        if (j === -1) j = input.length;
+        tokens.push({type:'TERM', value: input.substring(i + 1, j)});
+        i = j + 1; continue;
+      }
+      if (input[i] === '/') {
+        var j = input.indexOf('/', i + 1);
+        if (j === -1) j = input.length;
+        tokens.push({type:'REGEX', value: input.substring(i + 1, j)});
+        i = j + 1; continue;
+      }
+      if (input.substring(i, i + 6).toLowerCase() === 'regex:') {
+        i += 6; var start = i;
+        while (i < input.length && !/\s/.test(input[i]) && input[i] !== ')') i++;
+        tokens.push({type:'REGEX', value: input.substring(start, i)});
+        continue;
+      }
+      var start = i;
+      while (i < input.length && !/\s/.test(input[i]) && input[i] !== '(' && input[i] !== ')') i++;
+      var word = input.substring(start, i);
+      if (word.toUpperCase() === 'AND') tokens.push({type:'AND'});
+      else if (word.toUpperCase() === 'OR') tokens.push({type:'OR'});
+      else if (word.toUpperCase() === 'NOT') tokens.push({type:'NOT'});
+      else tokens.push({type:'TERM', value: word});
+    }
+    return tokens;
+  }
+
+  // Recursive descent parser — returns an AST
+  function advParse(tokens) {
+    var pos = 0;
+    function peek() { return pos < tokens.length ? tokens[pos] : null; }
+    function consume() { return tokens[pos++]; }
+
+    function parseExpr() {
+      var left = parseAnd();
+      while (peek() && peek().type === 'OR') { consume(); left = {type:'OR', l:left, r:parseAnd()}; }
+      return left;
+    }
+    function parseAnd() {
+      var left = parseNot();
+      while (peek() && peek().type !== 'OR' && peek().type !== 'RPAREN') {
+        if (peek().type === 'AND') consume();
+        if (!peek() || peek().type === 'OR' || peek().type === 'RPAREN') break;
+        left = {type:'AND', l:left, r:parseNot()};
+      }
+      return left;
+    }
+    function parseNot() {
+      if (peek() && peek().type === 'NOT') { consume(); return {type:'NOT', o:parsePrimary()}; }
+      return parsePrimary();
+    }
+    function parsePrimary() {
+      var t = peek();
+      if (!t) return {type:'TERM', v:''};
+      if (t.type === 'LPAREN') { consume(); var n = parseExpr(); if (peek() && peek().type === 'RPAREN') consume(); return n; }
+      if (t.type === 'REGEX') { consume(); return {type:'REGEX', v:t.value}; }
+      if (t.type === 'TERM')  { consume(); return {type:'TERM',  v:t.value}; }
+      consume(); return {type:'TERM', v:''};
+    }
+    return tokens.length ? parseExpr() : null;
+  }
+
+  // Evaluator — tests AST against a text string
+  function advEval(node, text) {
+    if (!node) return true;
+    switch (node.type) {
+      case 'AND':  return advEval(node.l, text) && advEval(node.r, text);
+      case 'OR':   return advEval(node.l, text) || advEval(node.r, text);
+      case 'NOT':  return !advEval(node.o, text);
+      case 'TERM': return text.indexOf(node.v.toLowerCase()) !== -1;
+      case 'REGEX':
+        try { return new RegExp(node.v, 'i').test(text); } catch(e) { return false; }
+    }
+    return true;
+  }
+
+  // Current advanced search AST (null = inactive)
+  var advSearchAST = null;
+
+  // Register custom filter with DataTables
+  $.fn.dataTable.ext.search.push(function(settings, searchData) {
+    if (!advSearchAST) return true;
+    var rowText = searchData.join(' ').toLowerCase();
+    return advEval(advSearchAST, rowText);
+  });
+
+  // Inject the advanced search box next to the default search
+  $('#host_overview_tbl_filter').after(
+    '<div id="adv_search_wrapper">' +
+      '<label>Advanced search: <input type="text" id="adv_search_input" placeholder="e.g. (centos OR ubuntu) AND NOT dev"></label>' +
+      '<span id="adv_search_link"></span>' +
+      '<div class="adv_help">Supports: <code>AND</code> <code>OR</code> <code>NOT</code> <code>( )</code> <code>"exact phrase"</code> <code>/regex/</code></div>' +
+    '</div>'
+  );
+
+  // Wire up input events
+  $('#adv_search_input').on('keyup change', function() {
+    var val = $.trim($(this).val());
+    if (val === '') {
+      advSearchAST = null;
+    } else {
+      advSearchAST = advParse(advTokenize(val));
+    }
+    table.draw();
+
+    // Update shareable link
+    $('#adv_search_link').empty();
+    if (val !== '') {
+      var params = '?adv=' + encodeURIComponent(val);
+      if (table.search()) params += '&search=' + encodeURIComponent(table.search());
+      $('#adv_search_link').html('&nbsp; <a title="Direct link to advanced search" href="' + params + '">&nbsp;</a>');
+    }
+  });
+
+  // Apply advanced search from URL query string
+  var qpAdv = getQueryParams(document.location.search);
+  if ("adv" in qpAdv) {
+    $('#adv_search_input').val(qpAdv.adv);
+    advSearchAST = advParse(advTokenize(qpAdv.adv));
+    table.draw();
+  }
 </%def>
 
 <%def name="js_ev_collapse()">
