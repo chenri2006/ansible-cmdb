@@ -13,7 +13,16 @@ def get_long_description():
 
 
 def get_version():
-    return open("src/ansiblecmdb/data/VERSION", "r").read().strip()
+    import subprocess
+    base = open("src/ansiblecmdb/data/VERSION", "r").read().strip()
+    try:
+        git_hash = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            stderr=subprocess.DEVNULL
+        ).decode().strip()
+        return "{0}+g{1}".format(base, git_hash)
+    except Exception:
+        return base
 
 
 def get_data_files(path, strip="", prefix=""):
@@ -32,7 +41,7 @@ if sys.argv[-1] == "publish":
 
 setup(
     name="ansible-cmdb",
-    version="1.0.1",
+    version=get_version(),
     license="GPLv3",
     description="Generate host overview from ansible fact gathering output",
     long_description=get_long_description(),
