@@ -8,11 +8,8 @@
 local_js = to_bool(context.get('local_js', '0'))
 collapsed = to_bool(context.get('collapsed', '0'))
 
-# Set the Javascript resource URL (local disk or CDN)
-if local_js is False:
-  res_url = "https://cdn.datatables.net/1.10.2/"
-else:
-  res_url = "file://" + data_dir + "/static/"
+# Set the Javascript resource URL (relative path for HTTP serving)
+res_url = "static"
 %>
 
 <% html_header(host['name'], local_js, res_url) %>

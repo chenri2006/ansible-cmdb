@@ -42,6 +42,9 @@ Features
     * SQL (`--template sql`), for importing host facts into a (My)SQL database.
     * Plain Text table (`--template txt_table`), for the console gurus.
     * and of course, any custom template you're willing to make.
+* Export displayed/filtered data as CSV, Excel (.xlsx), or PDF directly from
+  the browser. A Print button is also available. Exports respect column
+  visibility and active search filters.
 * Host overview and detailed host information.
 * Host and group variables.
 * Gathered host facts and manual custom facts.

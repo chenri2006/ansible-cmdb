@@ -16,11 +16,8 @@ cols = var_cols(columns, exclude_columns)
 # Extend default columns with custom columns
 cols.extend(cust_cols)
 
-# Set the Javascript resource URL (local disk or CDN)
-if local_js is False:
-  res_url = "https://cdn.datatables.net/1.10.2/"
-else:
-  res_url = "file://" + data_dir + "/static/"
+# Set the Javascript resource URL (relative path for HTTP serving)
+res_url = "static"
 
 # Set the link type for the host overview table's 'host' column (the link that
 # takes you to the host details).

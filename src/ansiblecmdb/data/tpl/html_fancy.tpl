@@ -18,7 +18,7 @@ cols.extend(cust_cols)
 
 # Set the Javascript resource URL (local disk or CDN)
 if local_js is False:
-  res_url = "https://cdn.datatables.net/1.10.2/"
+  res_url = "file://" + data_dir + "/static/"
 else:
   res_url = "file://" + data_dir + "/static/"
 

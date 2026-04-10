@@ -3,6 +3,7 @@
 import sys
 import os
 import codecs
+import shutil
 from mako.template import Template
 from mako.lookup import TemplateLookup
 
@@ -10,6 +11,16 @@ from mako.lookup import TemplateLookup
 def render(hosts, vars={}, tpl_dirs=[]):
     if not os.path.isdir("cmdb"):
         os.mkdir("cmdb")
+
+    # Copy static assets (JS, CSS, images) into the output directory so they
+    # can be served over HTTP alongside the generated HTML pages.
+    data_dir = vars.get("data_dir", "")
+    static_src = os.path.join(data_dir, "static")
+    static_dst = os.path.join("cmdb", "static")
+    if os.path.isdir(static_src):
+        if os.path.isdir(static_dst):
+            shutil.rmtree(static_dst)
+        shutil.copytree(static_src, static_dst)
 
     lookup = TemplateLookup(
         directories=tpl_dirs,
