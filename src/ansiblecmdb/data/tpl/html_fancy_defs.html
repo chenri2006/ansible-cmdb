@@ -120,6 +120,7 @@
   <html>
   <head>
     <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="43200">
     <title>${title}</title>
     <style type="text/css">
       /* reset.css */
@@ -227,6 +228,23 @@
       #adv_search_wrapper .adv_help code { font-weight: bold; color: #555; }
       #adv_search_link a { color: #000000; background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAoUlEQVR4Xu2TIQ6EMBBF/+4dOUBFBYoboBHoBsuRUCgcnpDg3/Y7ICQVK3ebvPxJ30xH9QXom/PO/PoDAjSOY8pwIwFFr2EYUobjONj33bjGd3Ylr77v2bYNp7Hwhifs3HOeUdu2LMuCE1DXdedtl612cJ1R0zRM04TT1HVNjPERO/ecZxRCSBnmeWZdV+Ma39mVvABVVZUy3EhA0f//gvQB4y08WIiD/goAAAAASUVORK5CYII=) no-repeat left center; padding: 5px 0 5px 25px; }
 
+      /* Stale-page banner */
+      #stale_banner {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        background: #ffcc00;
+        color: #333;
+        padding: 10px 16px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+        z-index: 2000;
+        border-bottom: 1px solid #cc9900;
+      }
+      #stale_banner a { color: #0066cc; text-decoration: underline; margin-left: 12px; cursor: pointer; }
+      body.has-stale-banner header { top: 40px; }
+
       /* Export buttons styling */
       div.dt-buttons { margin-bottom: 12px; }
       .dt-button {
@@ -258,16 +276,40 @@
     <script type="text/javascript" charset="utf8" src="${res_url}/js/vfs_fonts.js"></script>
     <script type="text/javascript" charset="utf8" src="${res_url}/js/buttons.html5.min.js"></script>
     <script type="text/javascript" charset="utf8" src="${res_url}/js/buttons.print.min.js"></script>
+    <script type="text/javascript">
+      (function(){
+        var GENERATED_AT = ${int(datetime.datetime.now().timestamp())};
+        var MAX_AGE_SECONDS = 43200; // 12 hours
+        function checkStale() {
+          var ageSec = Math.floor(Date.now() / 1000) - GENERATED_AT;
+          if (ageSec >= MAX_AGE_SECONDS) {
+            var b = document.getElementById('stale_banner');
+            if (b) {
+              b.style.display = 'block';
+              document.body.classList.add('has-stale-banner');
+            }
+          }
+        }
+        document.addEventListener('DOMContentLoaded', checkStale);
+        document.addEventListener('visibilitychange', function(){
+          if (!document.hidden) checkStale();
+        });
+      })();
+    </script>
   </head>
   <body>
 </%def>
 
 <%def name="html_header_bar(title)">
+  <div id="stale_banner">
+    &#9888; This page was generated more than 12 hours ago and may be out of date.
+    <a href="#" onclick="location.reload(); return false;">Reload now</a>
+  </div>
   <header>
     <h1>${title}</h1>
     <span id="top"><a href="#">Back to top</a></span>
     <span id="clear_settings"><a href="javascript:window.localStorage.clear('columnVisibility'); location.reload();" title="If things are acting weird, press this button">Clear settings</a></span> 
-    <span id="generated">Generated on <span class="detail">${datetime.datetime.now().strftime('%c')}</span> by <span class="detail">${getpass.getuser()}</span> @ <span class="detail">${socket.getfqdn()}</span></span>
+    <span id="generated">Generated on <span class="detail">${datetime.datetime.utcnow().strftime('%c')} UTC</span> by <span class="detail">${getpass.getuser()}</span> @ <span class="detail">${socket.getfqdn()}</span></span>
   </header>
 </%def>
 

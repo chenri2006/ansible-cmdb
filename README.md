@@ -49,6 +49,9 @@ Features
   parenthetical grouping, `"quoted phrases"`, and `/regex/` patterns. Works
   alongside the default search box. See [Advanced Search](#advanced-search)
   below for details.
+* Stale-page detection: generated pages auto-refresh after 12 hours via a
+  `<meta refresh>` tag, and a banner appears when a user returns to a tab
+  older than 12 hours. See [Stale page handling](#stale-page-handling) below.
 * Host overview and detailed host information.
 * Host and group variables.
 * Gathered host facts and manual custom facts.
@@ -120,6 +123,49 @@ Advanced search terms are shareable via the `?adv=` query parameter, similar to
 the default search's `?search=` parameter. Both can be combined:
 
     http://host:3000/?search=prod&adv=(centos OR ubuntu) AND NOT dev
+
+
+Stale page handling
+-------------------
+
+When ansible-cmdb pages are regenerated on a schedule (e.g. via cron), users
+who leave the page open in a tab or return to a bookmarked URL can end up
+looking at stale data without realizing it. The generated HTML includes two
+client-side safeguards to reduce this:
+
+1. **`<meta http-equiv="refresh" content="43200">`** — a tab left open will
+   reload itself automatically after 12 hours.
+2. **Stale banner** — a small script embedded in the page records the
+   generation time at render. On `DOMContentLoaded` and whenever the tab
+   regains focus (`visibilitychange`), it compares the current time to the
+   generation time. If the age is ≥ 12 hours, a yellow banner appears at the
+   top of the page with a "Reload now" link. Fresh pages show no banner.
+
+The timestamp in the page header is rendered in **UTC** so it's unambiguous
+regardless of the viewer's timezone.
+
+### Serving ansible-cmdb behind Apache
+
+If you serve the generated pages over HTTP (e.g. with Apache 2.4), you can
+also set HTTP-level cache headers so the browser itself will not serve a copy
+older than 12 hours without revalidating with the server. Add this to your
+vhost or `<Directory>` block (requires `mod_headers` and `mod_expires`, both
+enabled by default on RHEL-family distributions):
+
+```apache
+<Directory "/var/www/html/ansible-cmdb">
+    <FilesMatch "\.html$">
+        Header set Cache-Control "max-age=43200, must-revalidate, public"
+        ExpiresActive On
+        ExpiresDefault "access plus 12 hours"
+    </FilesMatch>
+</Directory>
+```
+
+After 12 hours the browser sends a conditional `If-Modified-Since` request;
+Apache answers `304 Not Modified` if the file is unchanged, or `200` with
+the new content. Scoping to `\.html$` leaves the `static/` JS and CSS
+assets with their normal caching behavior.
 
 
 License
