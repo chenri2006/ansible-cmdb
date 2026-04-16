@@ -154,6 +154,11 @@ if __name__ == "__main__":
     tpl_dir = os.path.join(data_dir, "tpl")
     static_dir = os.path.join(data_dir, "static")
     version = open(os.path.join(data_dir, "VERSION")).read().strip()
+    try:
+        from importlib.metadata import version as pkg_version
+        version = pkg_version("ansible-cmdb")
+    except Exception:
+        pass
 
     parser = optparse.OptionParser(version="%prog v{0}".format(version))
     parser.set_usage(os.path.basename(sys.argv[0]) + " [option] <dir> > output.html")
